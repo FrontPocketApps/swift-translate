@@ -84,7 +84,8 @@ public final class StringCatalog {
             localizableStringGroups[key] = LocalizableStringGroup(
                 comment: entry.comment,
                 extractionState: entry.extractionState, 
-                strings: localizableStrings
+                strings: localizableStrings,
+                shouldTranslate: entry.shouldTranslate
             )
         }
     }
@@ -112,6 +113,10 @@ public final class StringCatalog {
         for key: String,
         referencing sourceLanguageStrings: [LocalizableString]
     ) throws -> [LocalizableString] {
+        guard entry.shouldTranslate ?? true else {
+            return []
+        }
+        
         var localizableStrings = [LocalizableString]()
         
         for language in targetLanguages {
