@@ -9,4 +9,5 @@ import Foundation
 public enum OpenAIModel: String, ExpressibleByArgument {
     case gpt3_5Turbo = "gpt-3.5-turbo"
     case gpt4o = "gpt-4o"
+    case gpt4Turbo = "gpt-4-turbo"
 }
