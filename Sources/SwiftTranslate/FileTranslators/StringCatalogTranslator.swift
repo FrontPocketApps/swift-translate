@@ -14,15 +14,17 @@ struct StringCatalogTranslator: FileTranslator {
     let skipConfirmations: Bool
     let targetLanguages: Set<Language>?
     let service: TranslationService
+    let state: TranslationState
     let verbose: Bool
     
     // MARK: Lifecycle
     
-    init(with translator: TranslationService, targetLanguages: Set<Language>?, overwrite: Bool, skipConfirmations: Bool, verbose: Bool) {
+    init(with translator: TranslationService, targetLanguages: Set<Language>?, overwrite: Bool, skipConfirmations: Bool, state: TranslationState, verbose: Bool) {
         self.skipConfirmations = skipConfirmations
         self.overwrite = overwrite
         self.targetLanguages = targetLanguages
         self.service = translator
+        self.state = state
         self.verbose = verbose
     }
     
@@ -80,7 +82,7 @@ struct StringCatalogTranslator: FileTranslator {
                 taskGroup.addTask {
                     do {
                         let translatedString = try await service.translate(localizableString.sourceKey, to: targetLanguage, comment: localizableStringGroup.comment)
-                        localizableString.setTranslation(translatedString)
+                        localizableString.setTranslation(translatedString, state: state)
                         if verbose {
                             logTranslationResult(to: targetLanguage, result: translatedString.truncatedRemovingNewlines(to: 64), isSource: isSource)
                         }

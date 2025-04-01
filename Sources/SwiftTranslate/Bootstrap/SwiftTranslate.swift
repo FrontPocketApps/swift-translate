@@ -72,7 +72,13 @@ struct SwiftTranslate: AsyncParsableCommand {
         help: "Enables verbose log output"
     )
     private var verbose: Bool = false
-    
+
+    @Option(
+        name: [.customLong("state")],
+        help: "State that translated strings are set to. Either Service to use. Either `needsReview` (default) or `translated`"
+    )
+    private var state: SuccessfulTranslationState = .needsReview
+
     // MARK: Private
     
     private static let languageList = [Language("all-common")] + Language.allCommon
@@ -80,6 +86,10 @@ struct SwiftTranslate: AsyncParsableCommand {
     // MARK: Lifecycle
     
     func run() async throws {
+        guard let translationState = TranslationState(rawValue: state.rawValue) else {
+            throw ValidationError("Invalid translation state provided: \(state.rawValue)")
+        }
+
         var translator: TranslationService
         
         switch service {
@@ -120,11 +130,12 @@ struct SwiftTranslate: AsyncParsableCommand {
         } else {
             throw ValidationError("No text or string catalog file to translate provided")
         }
-        
+
         let coordinator = TranslationCoordinator(
             mode: mode,
             translator: translator,
             skipConfirmation: skipConfirmation,
+            state: translationState,
             verbose: verbose
         )
         try await coordinator.translate()
@@ -154,4 +165,9 @@ fileprivate struct CatalogTranlationOptions: ParsableArguments {
         help: "File or directory containing string catalogs to translate"
     )
     var fileOrDirectory: [String] = []
+}
+
+public enum SuccessfulTranslationState: String, Codable, Equatable, ExpressibleByArgument {
+    case needsReview = "needs_review"
+    case translated
 }
