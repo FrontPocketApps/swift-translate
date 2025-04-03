@@ -15,13 +15,15 @@ struct OpenAITranslator {
     private let openAI: OpenAI
     private let model: OpenAIModel
     private let retries: Int
+    private let appPrompt: String?
 
     // MARK: Lifecycle
     
-    init(with apiToken: String, model: OpenAIModel, timeoutInterval: Int, retries: Int) {
+    init(with apiToken: String, model: OpenAIModel, timeoutInterval: Int, retries: Int, appPrompt: String?) {
         self.openAI = OpenAI(configuration: OpenAI.Configuration(token: apiToken, timeoutInterval: TimeInterval(timeoutInterval)))
         self.model = model
         self.retries = retries
+        self.appPrompt = appPrompt
     }
     
     // MARK: Helpers
@@ -39,6 +41,9 @@ struct OpenAITranslator {
             Do not provide blank translations. Do not hallucinate. Do not provide translations that are not faithful to the original text.
             Put particular attention to languages that use different characters and symbols than English.
             """
+        if let appPrompt, !appPrompt.isEmpty {
+            systemPrompt += "\nTake into consideration this context about the app being translated: \(appPrompt)"
+        }
         if let comment {
             systemPrompt += "\nTake into consideration the following context when translating, but do not completely change the translation because of it: \(comment)\n"
         }

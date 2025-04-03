@@ -91,6 +91,12 @@ struct SwiftTranslate: AsyncParsableCommand {
     )
     private var deleteKey: Bool = false
 
+    @Option(
+        name: [.customLong("app-prompt"), .customShort("p")],
+        help: "File containing additional system prompt text to give app context."
+    )
+    private var appPrompt: String?
+
     // MARK: Private
     
     private static let languageList = [Language("all-common")] + Language.allCommon
@@ -134,7 +140,23 @@ struct SwiftTranslate: AsyncParsableCommand {
         case .google:
             translator = GoogleTranslator(apiKey: apiToken, timeoutInterval: timeoutInterval)
         case .openAI:
-            translator = OpenAITranslator(with: apiToken, model: model, timeoutInterval: timeoutInterval, retries: requestRetry)
+            let prompt: String?
+            if let appPrompt {
+                let url = URL(fileURLWithPath: appPrompt)
+                do {
+                    let fileContents = try String(contentsOf: url, encoding: .utf8)
+                    if !fileContents.isEmpty {
+                        prompt = fileContents
+                    } else {
+                        prompt = nil
+                    }
+                } catch {
+                    throw ValidationError("Unable to open contents of \(url.path): \(error.localizedDescription)")
+                }
+            } else {
+                prompt = nil
+            }
+            translator = OpenAITranslator(with: apiToken, model: model, timeoutInterval: timeoutInterval, retries: requestRetry, appPrompt: prompt)
         }
         
         var targetLanguages: Set<Language>?
