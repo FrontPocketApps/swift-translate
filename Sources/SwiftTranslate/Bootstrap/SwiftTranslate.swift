@@ -23,8 +23,8 @@ struct SwiftTranslate: AsyncParsableCommand {
         name: [.customLong("api-key"), .customShort("k")],
         help: "OpenAI or Google Cloud Translate (v2) API key"
     )
-    private var apiToken: String
-    
+    private var apiToken: String = ""
+
     @Option(
         name: [.customLong("model"), .customShort("m")],
         help: "OpenAI model to use. Either `gpt-3.5-turbo` (default) or `gpt-4o`. Ignored when using Google Translate"
@@ -79,15 +79,53 @@ struct SwiftTranslate: AsyncParsableCommand {
     )
     private var state: SuccessfulTranslationState = .needsReview
 
+    @Flag(
+        name: [.customLong("store-key")],
+        help: "Indicates that the API key should be stored for future use. Will stop after storage and will not process translations."
+    )
+    private var storeKey: Bool = false
+
+    @Flag(
+        name: [.customLong("delete-key")],
+        help: "Indicates that the API key should be deleted. Will stop after deletion and will not process translations."
+    )
+    private var deleteKey: Bool = false
+
     // MARK: Private
     
     private static let languageList = [Language("all-common")] + Language.allCommon
-    
+
     // MARK: Lifecycle
     
     func run() async throws {
         guard let translationState = TranslationState(rawValue: state.rawValue) else {
             throw ValidationError("Invalid translation state provided: \(state.rawValue)")
+        }
+
+        // Delete the API key, if requested
+        if deleteKey {
+            SecureStorage().deleteValue(for: service.rawValue)
+            return
+        }
+
+        // Store the API key, if requested
+        if storeKey {
+            guard !apiToken.isEmpty else {
+                throw ValidationError("Unable to store API Key. API Key is missing.")
+            }
+            SecureStorage().storeValue(apiToken, for: service.rawValue)
+            return
+        }
+
+        // Validate API key. If not specified, check if we have one stored for this service.
+        var apiToken = apiToken
+        if apiToken.isEmpty {
+            if let storedToken = SecureStorage().retrieveValue(type: String.self, for: service.rawValue) {
+                apiToken = storedToken
+            }
+        }
+        guard !apiToken.isEmpty else {
+            throw ValidationError("API Key is missing")
         }
 
         var translator: TranslationService
