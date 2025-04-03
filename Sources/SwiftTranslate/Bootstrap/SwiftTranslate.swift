@@ -39,12 +39,12 @@ struct SwiftTranslate: AsyncParsableCommand {
     @OptionGroup(
         title: "Translate string catalogs"
     )
-    private var catalogOptions: CatalogTranlationOptions
+    private var catalogOptions: CatalogTranslationOptions
     
     @Option(
         name: [.customLong("lang"), .short],
         parsing: .upToNextOption,
-        help: "Target language(s) or `all` for all common languages. Omitting this option will use existing langauges in the String Catalog(s)\n",
+        help: "Target language(s) or `all` for all common languages. Omitting this option will use existing languages in the String Catalog(s)\n",
         completion: .list(Language.allCommon.map(\.rawValue))
     )
     private var languages: [Language] = [Language("__in_catalog")]
@@ -190,7 +190,7 @@ fileprivate struct TextTranslationOptions: ParsableArguments {
     var text: String?
 }
 
-fileprivate struct CatalogTranlationOptions: ParsableArguments {
+fileprivate struct CatalogTranslationOptions: ParsableArguments {
     
     @Flag(
         name: [.customLong("overwrite")],
