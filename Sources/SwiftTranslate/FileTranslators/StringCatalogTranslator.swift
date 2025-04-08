@@ -38,9 +38,12 @@ struct StringCatalogTranslator: FileTranslator {
         if catalog.allKeys.isEmpty {
             return 0
         }
-        
+
+        var counter = 1
+        let totalCount = catalog.allKeys.count
         for key in catalog.allKeys {
-            try await translate(key: key, in: catalog)
+            try await translate(key: key, in: catalog, counter: counter, totalCount: totalCount)
+            counter += 1
         }
         
         var targetUrl = fileUrl
@@ -58,11 +61,11 @@ struct StringCatalogTranslator: FileTranslator {
         return catalog
     }
     
-    private func translate(key: String, in catalog: StringCatalog) async throws {
+    private func translate(key: String, in catalog: StringCatalog, counter: Int, totalCount: Int) async throws {
         guard let localizableStringGroup = catalog.localizableStringGroups[key] else {
             return
         }
-        Log.info(newline: verbose ? .before : .none, "Translating key `\(key.truncatedRemovingNewlines(to: 64))` " + "[Comment: \(localizableStringGroup.comment ?? "n/a")]".dim)
+        Log.info(newline: verbose ? .before : .none, "Translating key (\(counter) of \(totalCount))  `\(key.truncatedRemovingNewlines(to: 64))` " + "[Comment: \(localizableStringGroup.comment ?? "n/a")]".dim)
 
         await withThrowingTaskGroup(of: Void.self) { taskGroup in
             for localizableString in localizableStringGroup.strings {
